@@ -1,3 +1,4 @@
+using Microsoft.WindowsAzure;
 using System;
 using System.Configuration;
 using System.Linq;
@@ -15,17 +16,14 @@ namespace SharpBrake
         /// </summary>
         public AirbrakeConfiguration()
         {
-            ApiKey = ConfigurationManager.AppSettings["Airbrake.ApiKey"];
-            EnvironmentName = ConfigurationManager.AppSettings["Airbrake.Environment"];
-            ServerUri = ConfigurationManager.AppSettings["Airbrake.ServerUri"]
+            ApiKey = CloudConfigurationManager.GetSetting("Airbrake.ApiKey");
+            EnvironmentName = CloudConfigurationManager.GetSetting("Airbrake.Environment");
+            ServerUri = CloudConfigurationManager.GetSetting("Airbrake.ServerUri")
                         ?? "https://api.airbrake.io/notifier_api/v2/notices";
 
             ProjectRoot = HttpRuntime.AppDomainAppVirtualPath ?? Environment.CurrentDirectory;
 
-            string[] values = ConfigurationManager.AppSettings.GetValues("Airbrake.AppVersion");
-            
-            if (values != null)
-                AppVersion = values.FirstOrDefault();
+            AppVersion = CloudConfigurationManager.GetSetting("Airbrake.AppVersion");
         }
 
 
