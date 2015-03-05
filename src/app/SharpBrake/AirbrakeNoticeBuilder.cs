@@ -103,13 +103,14 @@ namespace SharpBrake
             this.log.Debug(f => f("{0}.Notice({1})", GetType(), exception.GetType()), exception);
 
             MethodBase catchingMethod;
-            var backtrace = BuildBacktrace(exception, out catchingMethod);
+            Exception innerMostException;
+            var backtrace = BuildRecursiveBacktrace(exception, out catchingMethod, out innerMostException);
 
             var error = Activator.CreateInstance<AirbrakeError>();
 
             error.CatchingMethod = catchingMethod;
-            error.Class = exception.GetType().FullName;
-            error.Message = exception.GetType().Name + ": " + exception.Message;
+            error.Class = innerMostException.GetType().FullName;
+            error.Message = innerMostException.GetType().Name + ": " + innerMostException.Message;
             error.Backtrace = backtrace;
 
             return error;
@@ -233,6 +234,38 @@ namespace SharpBrake
             request.Params = parameters.Any() ? parameters.ToArray() : null;
             request.Session = session.Any() ? session.ToArray() : null;
             notice.Request = request;
+        }
+
+
+        private AirbrakeTraceLine[] BuildRecursiveBacktrace(Exception outerMostException, out MethodBase catchingMethod, out Exception innerMostException)
+        {
+            Stack<AirbrakeTraceLine[]> stacks = new Stack<AirbrakeTraceLine[]>();
+            catchingMethod = null;
+            Exception currentException = innerMostException = outerMostException;
+
+            while (currentException != null)
+            {
+                innerMostException = currentException;
+
+                AirbrakeTraceLine[] backtrace = BuildBacktrace(currentException, out catchingMethod);
+
+                if (currentException == outerMostException || !(backtrace.Length == 1 && backtrace[0].File == "none"))
+                {
+                    stacks.Push(backtrace);
+                }
+
+                if (currentException.InnerException != null)
+                {
+                    string rethrownMessage = String.Format("Rethrown by {0}: {1}", currentException.GetType().FullName, currentException.Message);
+
+                    AirbrakeTraceLine rethrownLine = new AirbrakeTraceLine(rethrownMessage, 0);
+                    stacks.Push(new AirbrakeTraceLine[] { rethrownLine });
+                }
+
+                currentException = currentException.InnerException;
+            }
+
+            return stacks.SelectMany(s => s).ToArray();
         }
 
 
