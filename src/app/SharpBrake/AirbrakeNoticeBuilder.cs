@@ -164,6 +164,34 @@ namespace SharpBrake
         }
 
 
+        /// <summary>
+        /// Creates a <see cref="AirbrakeNotice"/> from the the specified exception.
+        /// </summary>
+        /// <param name="exception">The exception.</param>
+        /// <returns>
+        /// A <see cref="AirbrakeNotice"/>, created from the the specified exception.
+        /// </returns>
+        public AirbrakeNotice Notice(string message, StackTrace stackTrace)
+        {
+            if (message == null)
+                throw new ArgumentNullException("message");
+
+            if (stackTrace == null)
+                throw new ArgumentNullException("stackTrace");
+
+            this.log.Info(f => f("{0}.Notice({1})", GetType(), message));
+
+            AirbrakeError error = Activator.CreateInstance<AirbrakeError>();
+
+            MethodBase catchingMethod;
+            error.Backtrace = BuildBacktrace(stackTrace, out catchingMethod);
+            error.Class = catchingMethod.DeclaringType.FullName;
+            error.Message = message;
+
+            return Notice(error);
+        }
+
+
         private void AddContextualInformation(AirbrakeNotice notice, MethodBase catchingMethod)
         {
             var component = String.Empty;
@@ -271,6 +299,13 @@ namespace SharpBrake
 
         private AirbrakeTraceLine[] BuildBacktrace(Exception exception, out MethodBase catchingMethod)
         {
+            var stackTrace = new StackTrace(exception, true);
+            return BuildBacktrace(stackTrace, out catchingMethod);
+        }
+
+
+        private AirbrakeTraceLine[] BuildBacktrace(StackTrace stackTrace, out MethodBase catchingMethod)
+        {
             Assembly assembly = Assembly.GetExecutingAssembly();
 
             if (assembly.EntryPoint == null)
@@ -284,7 +319,6 @@ namespace SharpBrake
                                  : assembly.EntryPoint;
 
             List<AirbrakeTraceLine> lines = new List<AirbrakeTraceLine>();
-            var stackTrace = new StackTrace(exception, true);
             StackFrame[] frames = stackTrace.GetFrames();
 
             if (frames == null || frames.Length == 0)

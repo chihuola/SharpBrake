@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
-
 using Common.Logging;
-
 using SharpBrake.Serialization;
 
 namespace SharpBrake
@@ -60,6 +59,18 @@ namespace SharpBrake
 
             //TODO: set up request, session and server headers
             // Why would that be necessary, it's set in Send(AirbrakeNotice), isn't it? - @asbjornu
+
+            // Send the notice
+            Send(notice);
+        }
+
+        /// <summary>
+        /// Sends the specified exception to Airbrake.
+        /// </summary>
+        /// <param name="exception">The e.</param>
+        public void Send(string message, StackTrace stackTrace)
+        {
+            AirbrakeNotice notice = this.builder.Notice(message, stackTrace);
 
             // Send the notice
             Send(notice);
