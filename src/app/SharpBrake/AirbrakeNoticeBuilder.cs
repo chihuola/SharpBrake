@@ -235,7 +235,15 @@ namespace SharpBrake
 
                 cgiData.AddRange(BuildVars(httpRequest.Headers));
                 cgiData.AddRange(BuildVars(httpRequest.Cookies));
-                parameters.AddRange(BuildVars(httpRequest.Params));
+                try
+                {
+                    parameters.AddRange(BuildVars(httpRequest.Params));
+                }
+                catch (HttpRequestValidationException)
+                {
+                    // Skip adding Params if we got into this exception.
+                    // This could be happening if the client has submit values containing HTML tags.
+                }
                 session.AddRange(BuildVars(httpContext.Session));
 
                 if (httpContext.User != null)
