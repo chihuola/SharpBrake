@@ -1,8 +1,6 @@
-using Microsoft.WindowsAzure;
 using System;
-using System.Configuration;
-using System.Linq;
 using System.Web;
+using Microsoft.Azure;
 
 namespace SharpBrake
 {

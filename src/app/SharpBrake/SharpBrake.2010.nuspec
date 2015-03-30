@@ -2,7 +2,7 @@
 <package>
     <metadata>
         <id>SharpBrake</id>
-        <version>2.2.5</version>
+        <version>2.2.6</version>
         <authors>Asbjørn Ulsberg, Michael Friis</authors>
         <owners>Asbjørn Ulsberg, Michael Friis</owners>
         <projectUrl>https://github.com/asbjornu/SharpBrake</projectUrl>
